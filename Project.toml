@@ -1,0 +1,13 @@
+name = "PlotuDiff"
+uuid = "8c3df1d2-0c79-4df3-a832-85857c9a6996"
+authors = ["Paul <paul@plutojl.org>"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
