@@ -1,8 +1,14 @@
-# https://blog.jcoglan.com/2017/02/17/the-myers-diff-algorithm-part-3/
+"""
+	An implementation of the Myers algorithm as proposed in [1].
 
-# myers("ABCABBA", "CBABAC")
-# ^
-# this calls fails, see the blog post above
+	[1]E. Myers (1986). "An O(ND) Difference Algorithm and Its Variations".
+	   Algorithmica. 1 (2): 251–266. doi:10.1007/BF01840446. S2CID 6996809.
+"""
+struct Myers <: StringDiffAlgorithm end # TODO(paul): add timeout
+
+stringdiff(::Myers, a, b) =
+	myers(a, b)
+
 function myers(a, b)
 	trace = ses(a, b)
 	moves = backtrack(trace, a, b)
@@ -16,12 +22,11 @@ function ses(a, b)
 
 	trace = Vector{Int}[]
 	v = zeros(Int, 2*max+2)
-	v[max] = 0
 
 	for d in 0:max
 		push!(trace, copy(v))
 		for k in -d:2:d
-			x = if (k == -d || k != d) && (v[k+max] < v[k+2+max])
+			x = if k == -d || (k != d && v[k+max] < v[k+2+max])
 				v[k+2+max]
 			else
 				v[k+max]+1
@@ -73,32 +78,16 @@ function backtrack(trace, a, b)
 	moves
 end
 
-abstract type AbstractDiff end
-
-struct Insertion <: AbstractDiff
-	text
-end
-Base.show(io::IO, ins::Insertion) = write(io, "\e[32m", ins.text, "\e[32m\e[39m")
-
-struct Deletion <: AbstractDiff
-	text
-end
-Base.show(io::IO, del::Deletion) = write(io, "\e[31m", del.text, "\e[31m\e[39m")
-
-struct Equality <: AbstractDiff
-	text
-end
-Base.show(io::IO, eq::Equality) = write(io, eq.text)
-
 function apply_edits(moves, a, b)
-	diffs = []
-	for (prev_x, prev_y, x, y) in moves
-		a_line, b_line = a[prev_x+1], b[prev_y+1]
+	diffs = AbstractDiff[]
+	for (prev_x, prev_y, x, y) in reverse(moves)
+		a_line = get(a, prev_x+1, a[1])
+		b_line = get(b, prev_y+1, a[1])
 
 		if x == prev_x
-			push!(diffs, Insertion(a_line))
+			push!(diffs, Insertion(b_line))
 		elseif y == prev_y
-			push!(diffs, Deletion(b_line))
+			push!(diffs, Deletion(a_line))
 		else
 			push!(diffs, Equality(b_line))
 		end
