@@ -12,6 +12,9 @@ struct Equality <: AbstractDiff
 	text
 end
 
+text(d::AbstractDiff) = d.text
+to_string(d::T) where {T<:AbstractDiff} = T(string(text(d)))
+
 "Groups diffs of the same type together using `join`."
 function merge_diffs(vec::Vector{<:AbstractDiff}; join_with="")
 	out = AbstractDiff[]

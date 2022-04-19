@@ -15,6 +15,6 @@ end
 
 stringdiff_without_viewer(args...; kwargs...) = stringdiff(args...; kwargs..., viewer=identity)
 
-export stringdiff, merge_diffs, SimpleDiffViewer, LineDiffViewer
+export stringdiff, merge_diffs, SimpleDiffViewer, LineViewer, SimpleLineDiffViewer
 
 end
