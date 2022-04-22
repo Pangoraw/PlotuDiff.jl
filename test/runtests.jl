@@ -3,6 +3,12 @@ using PlotuDiff: Insertion, Deletion, Equality, Myers
 using PlotuDiff: stringdiff_without_viewer as sdiff
 using Test
 
+include("./snapshot.jl")
+
+@testset "Snapshots" begin
+    @snapshot "Test_1.txt" sdiff("value", "nature")
+end
+
 @testset "Myers algorithm" begin
 	a = "I LIKE PIZZA"
 	b = "YOU LIKE MEZZE"
