@@ -15,9 +15,9 @@ const color_codes =
     Dict{Colors,String}(Green => "\e[32m", Red => "\e[31m", Reset => "\e[39m")
 
 function with_color(f::Function, io::IO, ::MIME"text/plain", col::Colors)
-    write(io, color_codes[col])
+    print(io, color_codes[col])
     res = f()
-    write(io, color_codes[Reset])
+    print(io, color_codes[Reset])
     res
 end
 
@@ -34,16 +34,16 @@ const hex_color_codes = Dict{Colors,String}(
 )
 
 function with_color(f::Function, io::IO, ::MIME"text/html", col::Colors)
-    write(io, "<span style=\"color: $(hex_color_codes[col])\">")
+    print(io, "<span style=\"color: $(hex_color_codes[col])\">")
     res = f()
-    write(io, "</span>")
+    print(io, "</span>")
     res
 end
 
 ####
 
 function color(io::IO, m::PlainOrHtmlMIME, col::Colors, text)
-    with_color(() -> write(io, text), io, m, col)
+    with_color(() -> print(io, text), io, m, col)
 end
 
 green(io::IO, m::PlainOrHtmlMIME, text) = color(io, m, Green, text)
@@ -58,7 +58,7 @@ Base.show(io::IO, m::MIME"text/html", diff::T) where {T<:AbstractDiff} = disp(io
 
 disp(io::IO, m::PlainOrHtmlMIME, ins::Insertion) = green(io, m, ins.text)
 disp(io::IO, m::PlainOrHtmlMIME, del::Deletion) = red(io, m, del.text)
-disp(io::IO, ::PlainOrHtmlMIME, eq::Equality) = write(io, eq.text)
+disp(io::IO, ::PlainOrHtmlMIME, eq::Equality) = print(io, eq.text)
 
 abstract type AbstractDiffViewer end
 
@@ -68,9 +68,9 @@ Base.show(io::IO, adv::T) where {T<:AbstractDiffViewer} =
 Base.show(io::IO, m::MIME"text/plain", adv::T) where {T<:AbstractDiffViewer} =
     disp(io, m, adv)
 function Base.show(io::IO, m::MIME"text/html", adv::T) where {T<:AbstractDiffViewer}
-    write(io, "<pre>")
+    print(io, "<pre>")
     disp(io, m, adv)
-    write(io, "</pre>")
+    print(io, "</pre>")
 end
 
 struct SimpleDiffViewer <: AbstractDiffViewer
@@ -83,10 +83,10 @@ function disp(io::IO, m::PlainOrHtmlMIME, dv::SimpleDiffViewer)
     end
 end
 
-newline(io::IO, ::MIME"text/plain") = write(io, '\n')
-newline(io::IO, ::MIME"text/html") = write(io, "<br />")
-tabulate(io::IO, ::MIME"text/plain") = write(io, '\t')
-tabulate(io::IO, ::MIME"text/html") = write(io, "<span style=\"width: 4rem\"></span>")
+newline(io::IO, ::MIME"text/plain") = print(io, '\n')
+newline(io::IO, ::MIME"text/html") = print(io, "<br />")
+tabulate(io::IO, ::MIME"text/plain") = print(io, '\t')
+tabulate(io::IO, ::MIME"text/html") = print(io, "<span style=\"width: 4rem\"></span>")
 
 """
 Show both initial inputs on top of each other
@@ -114,7 +114,7 @@ end
 function _split_on_newline(io::IO, m::MIME, s::AbstractString, startline)
     parts = split(s, '\n'; keepempty = true)
     for part in parts
-        write(io, part)
+        print(io, part)
 
         newline(io, m)
         startline()
@@ -133,7 +133,7 @@ function disp(io::IO, m::PlainOrHtmlMIME, ldv::SimpleLineDiffViewer)
     with_red(io, m) do
         function startline()
             tabulate(io, m)
-            write(io, "- ")
+            print(io, "- ")
         end
         startline()
 
@@ -141,7 +141,7 @@ function disp(io::IO, m::PlainOrHtmlMIME, ldv::SimpleLineDiffViewer)
             diff isa Insertion && continue
             if '\n' ∈ diff.text
                 _split_on_newline(io, m, diff.text, startline)
-                write(io, diff.text)
+                print(io, diff.text)
             end
         end
     end
@@ -150,7 +150,7 @@ function disp(io::IO, m::PlainOrHtmlMIME, ldv::SimpleLineDiffViewer)
     with_green(io, m) do
         function startline()
             tabulate(io, m)
-            write(io, "+ ")
+            print(io, "+ ")
         end
         startline()
 
@@ -159,7 +159,7 @@ function disp(io::IO, m::PlainOrHtmlMIME, ldv::SimpleLineDiffViewer)
             if '\n' ∈ diff.text
                 _split_on_newline(io, m, diff.text, startline)
             else
-                write(io, diff.text)
+                print(io, diff.text)
             end
         end
     end

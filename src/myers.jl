@@ -1,21 +1,44 @@
+using Dates
+
 """
-    An implementation of the Myers algorithm as proposed in [1] working on the
-    character level.
+    Myers([timeout::Millisecond])
 
-    [1]E. Myers (1986). "An O(ND) Difference Algorithm and Its Variations".
-       Algorithmica. 1 (2): 251–266. doi:10.1007/BF01840446. S2CID 6996809.
+An implementation of the Myers algorithm as proposed in [1] working on the
+character level. A optional timeout can be set, at which point the algorithm
+will fall back to a series of deletions followed by insertions.
+
+[1]E. Myers (1986). "An O(ND) Difference Algorithm and Its Variations".
+   Algorithmica. 1 (2): 251–266. doi:10.1007/BF01840446. S2CID 6996809.
 """
-struct Myers <: StringDiffAlgorithm end # TODO(paul): add timeout
+struct Myers <: StringDiffAlgorithm
+    timeout::Union{Millisecond,Nothing}
 
-stringdiff(::Myers, a, b) = myers(a, b)
+    Myers() = new(nothing)
+end
 
-function myers(a, b)
-    trace = ses(a, b)
+stringdiff(alg::Myers, a::AbstractString, b::AbstractString) = diff(alg, a, b)
+
+function diff(alg::Myers, a, b)
+    start = now()
+    trace = ses(a, b; should_timeout = () -> now() - start > alg.timeout)
     moves = backtrack(trace, a, b)
     apply_edits(moves, a, b)
 end
 
-function ses(a, b)
+"""
+    myers(a, b)::Vector{AbstractDiff}
+
+Applies Myers'[1] algorithm to the two iterables a and b and return the
+set of differences between them.
+
+[1]E. Myers (1986). "An O(ND) Difference Algorithm and Its Variations".
+   Algorithmica. 1 (2): 251–266. doi:10.1007/BF01840446. S2CID 6996809.
+"""
+function myers(a, b)
+    diff(Myers(), a, b)
+end
+
+function ses(a, b; should_timeout = () -> false)
     N = length(a)
     M = length(b)
     max = length(a) + length(b)
